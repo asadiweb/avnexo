@@ -1,12 +1,71 @@
 <html>
 <head>
-<link href='/avnexo/assets/css/style.css' rel='stylesheet' type='text/css'/>
 <meta charset='utf-8'/>
 <meta content='EN' http-equiv='Content-Language'/>
 <meta content='IE=edge' http-equiv='X-UA-Compatible'/>
 <meta content='width=device-width, initial-scale=1' name='viewport'/>
 <meta content='A74444DA5E3BFD9B4B341900774415D8' name='msvalidate.01'/>
   <title>{{ title }}</title>
+  <style>
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  background: #f8f8f8;
+}
+
+header, footer {
+  background: #222;
+  color: #fff;
+  padding: 10px 20px;
+}
+
+header h1 a, footer a {
+  color: #fff;
+  text-decoration: none;
+}
+
+header nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+header nav a {
+  margin: 5px 0;
+  margin-right: 15px;
+  color: #fff;
+  text-decoration: none;
+}
+
+main {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  width: 90%;
+  box-sizing: border-box;
+}
+
+footer p {
+  margin: 5px 0;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  header nav {
+    flex-direction: column;
+  }
+
+  main {
+    padding: 15px;
+  }
+}
+    
+  </style>
 </head>
   <body>
   
