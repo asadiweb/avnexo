@@ -1,0 +1,30 @@
+name: Build HTML Static Site
+
+on:
+  push:
+    paths:
+      - 'articles/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install markdown pyyaml jinja2
+
+    - name: Run build.py
+      run: python build.py
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v5
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./builds
