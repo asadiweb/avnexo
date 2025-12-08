@@ -34,3 +34,8 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./builds
+
+        # انتهای build() قبل از print("Wrote index: ...")
+cname_file = OUT_DIR / "CNAME"
+cname_file.write_text("wiki.avnexo.com", encoding="utf-8")
+print("Wrote CNAME for custom domain")
