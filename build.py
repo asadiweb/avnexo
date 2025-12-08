@@ -1,7 +1,6 @@
 import os
 import markdown
 import yaml
-from jinja2 import Template
 from collections import defaultdict
 
 # مسیرها
@@ -48,57 +47,52 @@ for a in articles:
 
 # توابع تولید HTML
 def generate_article_page(article, related_articles):
-    template = f"""
-<!DOCTYPE html>
+    related_html = '\n'.join(
+        f'<li><a href="../articles/{ra["filename"]}">{ra["title"]}</a></li>'
+        for ra in related_articles[:5]
+    )
+    html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>{{{{ title }}}}</title>
-<link rel="stylesheet" href="../../assets/css/style.css">
+<title>{article['title']}</title>
+<link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 {header_html}
 <main>
 <nav class="breadcrumb">
-<a href="../../index.html">Home</a> › 
-<a href="../../brands/{{{{ brand|lower }}}}/index.html">{{{{ brand }}}}</a> › 
-<a href="../../brands/{{{{ brand|lower }}}}/{{{{ series|lower }}}}/index.html">{{{{ series }}}}</a> › 
-{{{{ title }}}}
+<a href="../index.html">Home</a> › 
+<a href="../brands/{article['brand'].lower()}/index.html">{article['brand']}</a> › 
+<a href="../brands/{article['brand'].lower()}/{article['series'].lower()}/index.html">{article['series']}</a> › 
+{article['title']}
 </nav>
 
-<h1>{{{{ title }}}}</h1>
+<h1>{article['title']}</h1>
 <div>
-{{{{ html_content|safe }}}}
+{article['html_content']}
 </div>
 
 <section>
 <h2>Related Articles</h2>
 <ul>
-{% for ra in related_articles %}
-<li><a href="../../articles/{{{{ ra.filename }}}}">{{{{ ra.title }}}}</a></li>
-{% endfor %}
+{related_html}
 </ul>
 </section>
 </main>
 {footer_html}
 </body>
-</html>
-"""
-    t = Template(template)
-    return t.render(title=article['title'],
-                    brand=article['brand'],
-                    series=article['series'],
-                    html_content=article['html_content'],
-                    related_articles=related_articles[:5])
+</html>"""
+    return html
 
 def generate_hub_page(title, articles_list, output_path):
-    html_articles = '\n'.join([f'<li><a href="../../articles/{a["filename"]}">{a["title"]}</a></li>' for a in articles_list])
+    html_articles = '\n'.join([f'<li><a href="../articles/{a["filename"]}">{a["title"]}</a></li>' for a in articles_list])
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>{title}</title>
-<link rel="stylesheet" href="../../assets/css/style.css">
+<link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 {header_html}
