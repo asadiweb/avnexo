@@ -1,36 +1,33 @@
 name: Build and Deploy Static HTML
 
-# وقتی مقاله جدید push شود
 on:
   push:
     paths:
       - 'articles/**'
+
+permissions:
+  contents: write    # ← مهم‌ترین خط برای رفع 403
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # گام 1: Checkout کد
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # گام 2: نصب پایتون
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
-    # گام 3: نصب dependencies
     - name: Install dependencies
       run: |
         pip install markdown pyyaml jinja2
 
-    # گام 4: اجرای build.py
     - name: Build HTML
       run: python build.py
 
-    # گام 5: Deploy به GitHub Pages
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
