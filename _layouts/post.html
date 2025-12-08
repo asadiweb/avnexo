@@ -1,0 +1,147 @@
+---
+layout: default
+---
+
+<article class="post">
+  <h1 itemprop="headline">{{ page.title }}</h1>
+  <div class="date">
+    <time datetime="{{ page.date }}">
+	{{ page.date | date: '%B %d, %Y'}}
+    </time>
+  </div>
+  <div class="entry">
+    {{ content }}
+  </div>
+  <hr/>
+  <small id="post-tags">
+  <b>Tags: </b>: 
+    {%- for tag in page.tags -%}
+      {% capture tag_name %}{{ tag }}{% endcapture %}
+      <a href="{{ site.baseurl }}/tag/{{tag_name}}" title="{{tag_name | replace: "-", " "}}" rel="tag">{{tag_name | replace: "-", " "}}</a>, 
+    {%- endfor -%}
+  </small>
+  <div class="author-section">
+    <div class="author-image">🎮</div>
+	<div>
+	<div class="author-about">
+            <a href="{{ site.baseurl }}/" rel="author">{{ site.name }}</a>
+	</div>
+	<div class="author-about site-description">
+            We try to write about everything related to the game including news, reviews, trailers, walkthroughs, and guides.
+            <br><small>✉ info(at)gameich.com</small>
+        </div>
+        </div>
+  </div>
+  <div class="related-posts">
+	<h3></h3>
+	<ul>
+	 {%- assign n = site.posts | size -%}
+         {%- assign posts = site.posts | sample: n -%}	
+	 {%- assign commonTag = '' -%}
+	 {%- assign count = 0 -%}
+	 {%- for tag in site.commonTags -%}
+		{%- if page.tags contains tag -%} {%- assign commonTag = tag -%} {%- endif -%}
+	 {%- endfor -%}
+	 {%- for post in posts -%}
+		{%- if count < 5 and post.tags contains commonTag and post.url != page.url -%} 
+		<li><a href="{{ site.baseurl }}{{ post.url }}" title="{{ post.title }}">{{ post.title }}</a></li> 
+	  	{% assign count = count | plus: 1 %}
+	  {%- endif -%}
+	  {%- endfor -%}
+	</ul> 
+  </div>
+  <script type='application/ld+json'>
+  {
+    "@context": "http://schema.org",
+    "@type": "Review",
+    "author": {
+      "@type": "Person",
+      "name": "Gameich",
+      "sameAs": "https://www.gameich.com"
+    },
+    "url": "{{site.url}}{{ page.url }}",
+    "datePublished": "{{ page.date }}",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Gameich",
+      "sameAs": "https://www.gameich.com/"
+    },
+    "description": "{{ content | markdownify | strip_html | truncatewords: 50 }}",
+    "inLanguage": "en",
+    "itemReviewed": {
+      "@type": "Product",
+      "name": "{{ page.title }}",
+      "sameAs": "{{site.url}}{{ page.url }}",
+      "brand": {
+        "@type": "Thing",
+        "name": "Gameich"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4",
+        "bestRating": "5",
+        "ratingCount": "83"
+      }
+    }
+  }
+  </script>
+  {%- capture post_date -%}{{ page.date | date: "%s" }}{%- endcapture -%}
+  {%- if site.data.comments[post_date] -%}
+    <h3>Comments</h3><hr/>
+    {%- assign comments = site.data.comments[post_date] | sort -%}
+    {%- for comment in comments -%}
+      <div class="comment-list">
+	  <div class="comment-avatar">
+		<img src="http://www.gravatar.com/avatar/{{ comment[1].email }}?d=mm&s=60">
+	  </div>
+	  <h4 class="comment-author-name">{{ comment[1].name }}</h4>
+	  <small class="comment-timestamp"><time datetime="{{ comment[1].date | date: "%Y-%m-%d %H:%M:%S +0430" }}">{{ comment[1].date | date: '%B %d, %Y'  }}</time></small>
+	  <p class="comment-content">{{ comment[1].msg | newline_to_br }}{{comment[1].message | newline_to_br }}</p>
+       </div>
+    {%- endfor -%}
+    {%- endif -%}
+  <div class="comment-form">
+   <form id="comment-form" method="post" action="{{ site.staticmanUrl }}" onsubmit="return checkForm(this);">
+    <input type="hidden" name="options[slug]" value="{{ page.date | date: "%s" }}">
+    <input name="options[redirect]" type="hidden" value="{{site.url}}{{ page.url }}?sendComment=true">
+    <input name="fields[url]" id="hidden-mail" type="hidden">
+    <input name="fields[agent]" id="hidden-useragent" type="hidden">
+    <label class="form-label">Name</label>   
+    <input type="text" required="required" name="fields[name]" placeholder="Name">
+    <label class="form-label">E-mail</label>
+    <input type="email" required="required" name="fields[email]" placeholder="E-mail" oninput="document.getElementById('hidden-mail').value = this.value.replace('@', '')">
+    <label class="form-label">Comment</label>
+    <textarea rows="4" required="required" name="fields[msg]" placeholder="write your comment here"></textarea>
+    <input type="submit" name="submitButton" />
+   </form>
+  </div>
+ <div class="pagination">
+    {%- if page.next -%}
+      <a href="{{ page.next.url | absolute_url }}" class="half-width" title="{{ page.next.title }}">{{ page.next.title }} →</a>
+    {%- else -%}
+      <span class="pagination-nonlink half-width"> ‌ </span>
+    {%- endif -%}
+    {%- if page.previous -%}
+      <a href="{{ page.previous.url | absolute_url }}" class="half-width" title="{{ page.previous.title }}">← {{ page.previous.title }}</a>
+    {%- else -%}
+      <span class="pagination-nonlink half-width"> ‌ </span>
+    {%- endif -%}
+  </div>
+  <script>
+  document.getElementById("hidden-useragent").value=navigator.userAgent;
+  if(getParameterByName("sendComment") == "true"){
+      alert("Your comment send successfully!");
+      window.history.replaceState({}, document.title, "{{ page.url }}");
+  }
+  function getParameterByName(name) {
+      var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+      return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+  }
+  function checkForm(form) {
+    form.submitButton.disabled = true;
+    form.submitButton.value = "sending...";
+    return true;
+  }
+  </script>
+  {%- include disqus.html -%}
+</article>
