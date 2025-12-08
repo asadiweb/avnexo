@@ -1,0 +1,41 @@
+<article>
+  <header>
+    <h1>{{ title }}</h1>
+    <p class="meta">
+      {% if date %}<time datetime="{{ date }}">{{ date }}</time>{% endif %}
+      {% if brand %} • Brand: <a href="/brand/{{ brand }}.html">{{ brand | capitalize }}</a>{% endif %}
+      {% if series %} / <a href="/brand/{{ brand }}-{{ series }}.html">{{ series | upper }}</a>{% endif %}
+    </p>
+    {% if summary %}<p class="summary">{{ summary }}</p>{% endif %}
+  </header>
+
+  <section class="content">
+    {{ content_html | safe }}
+  </section>
+
+  <footer>
+    <h4>Related</h4>
+    <ul>
+      {% if related.brand %}
+        <li>Other in <a href="/brand/{{ meta.brand }}.html">{{ meta.brand | capitalize }}</a></li>
+      {% endif %}
+      {% if related.series %}
+        <li>Series: <a href="/brand/{{ meta.brand }}-{{ meta.series }}.html">{{ meta.series | upper }}</a></li>
+      {% endif %}
+      {% if related.topics %}
+        <li>Topics:
+          {% for t in related.topics %}
+            <a href="/topic/{{ t }}.html">{{ t }}</a>{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </li>
+      {% endif %}
+      {% if related.countries %}
+        <li>Countries:
+          {% for c in related.countries %}
+            <a href="/country/{{ c }}.html">{{ c | upper }}</a>{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </li>
+      {% endif %}
+    </ul>
+  </footer>
+</article>
