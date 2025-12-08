@@ -1,181 +1,162 @@
+#!/usr/bin/env python3
 import os
-import markdown
+import re
+import shutil
 import yaml
-from collections import defaultdict
+import markdown
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+from datetime import datetime
+from pathlib import Path
 
-# مسیرها
-ARTICLES_DIR = 'articles'
-BUILD_DIR = 'builds'
-PARTIALS_DIR = 'partials'
+ROOT = Path(__file__).parent
+ARTICLES_DIR = ROOT / "articles"
+TEMPLATES_DIR = ROOT / "templates"
+OUT_DIR = ROOT / "builds"
 
-# بارگذاری header و footer
-with open(os.path.join(PARTIALS_DIR, 'header.html'), 'r', encoding='utf-8') as f:
-    header_html = f.read()
-with open(os.path.join(PARTIALS_DIR, 'footer.html'), 'r', encoding='utf-8') as f:
-    footer_html = f.read()
+env = Environment(
+    loader=FileSystemLoader(str(TEMPLATES_DIR)),
+    autoescape=select_autoescape(['html', 'xml'])
+)
 
-# خواندن مقالات
-articles = []
-for filename in os.listdir(ARTICLES_DIR):
-    if filename.endswith('.md'):
-        path = os.path.join(ARTICLES_DIR, filename)
-        with open(path, 'r', encoding='utf-8') as f:
-            content = f.read()
-            if content.startswith('---'):
-                parts = content.split('---', 2)
-                meta = yaml.safe_load(parts[1])
-                md_content = parts[2].strip()
-                html_content = markdown.markdown(md_content)
-                meta['html_content'] = html_content
-                meta['filename'] = filename.replace('.md', '.html')
-                articles.append(meta)
+article_tpl = env.get_template("article.html")
+hub_tpl = env.get_template("hub.html")
 
-# مرتب سازی مقالات بر اساس تاریخ
-articles.sort(key=lambda x: x['date'], reverse=True)
+FRONT_MATTER_REGEX = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)$", re.DOTALL)
 
-# ساختار هاب‌ها
-brands_hub = defaultdict(list)
-series_hub = defaultdict(lambda: defaultdict(list))
-topics_hub = defaultdict(list)
-countries_hub = defaultdict(list)
+def parse_md(file_path):
+    text = file_path.read_text(encoding="utf-8")
+    m = FRONT_MATTER_REGEX.match(text)
+    if not m:
+        raise ValueError(f"Missing front-matter in {file_path}")
+    meta_raw, body_md = m.group(1), m.group(2)
+    meta = yaml.safe_load(meta_raw)
+    return meta or {}, body_md
 
-for a in articles:
-    brands_hub[a['brand']].append(a)
-    series_hub[a['brand']][a['series']].append(a)
-    topics_hub[a['topic']].append(a)
-    countries_hub[a['country']].append(a)
+def slugify(s):
+    s = s.lower().strip()
+    s = re.sub(r'[^a-z0-9\-]+', '-', s)
+    s = re.sub(r'\-+', '-', s)
+    return s.strip('-')
 
-# توابع تولید HTML
-def generate_article_page(article, related_articles):
-    related_html = '\n'.join(
-        f'<li><a href="../articles/{ra["filename"]}">{ra["title"]}</a></li>'
-        for ra in related_articles[:5]
-    )
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{article['title']}</title>
-<link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-{header_html}
-<main>
-<nav class="breadcrumb">
-<a href="../index.html">Home</a> › 
-<a href="../brands/{article['brand'].lower()}/index.html">{article['brand']}</a> › 
-<a href="../brands/{article['brand'].lower()}/{article['series'].lower()}/index.html">{article['series']}</a> › 
-{article['title']}
-</nav>
+def ensure_out():
+    if OUT_DIR.exists():
+        shutil.rmtree(OUT_DIR)
+    (OUT_DIR / "brand").mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "topic").mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "country").mkdir(parents=True, exist_ok=True)
+    (OUT_DIR / "articles").mkdir(parents=True, exist_ok=True)
 
-<h1>{article['title']}</h1>
-<div>
-{article['html_content']}
-</div>
+def to_html(md_text):
+    return markdown.markdown(md_text, extensions=['fenced_code', 'codehilite', 'tables'])
 
-<section>
-<h2>Related Articles</h2>
-<ul>
-{related_html}
-</ul>
-</section>
-</main>
-{footer_html}
-</body>
-</html>"""
-    return html
+def build():
+    ensure_out()
+    index = []
+    # read all articles
+    for mdfile in ARTICLES_DIR.glob("*.md"):
+        meta, body_md = parse_md(mdfile)
+        title = meta.get("title") or "Untitled"
+        slug = meta.get("slug") or slugify(title)
+        brand = meta.get("brand")
+        series = meta.get("series")
+        topics = meta.get("topics") or []
+        countries = meta.get("countries") or []
+        date = meta.get("date")
+        summary = meta.get("summary") or ""
+        content_html = to_html(body_md)
 
-def generate_hub_page(title, articles_list, output_path):
-    html_articles = '\n'.join([f'<li><a href="../articles/{a["filename"]}">{a["title"]}</a></li>' for a in articles_list])
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>{title}</title>
-<link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-{header_html}
-<main>
-<h1>{title}</h1>
-<ul>
-{html_articles}
-</ul>
-</main>
-{footer_html}
-</body>
-</html>"""
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(html)
+        url = f"/articles/{slug}.html"
+        article_obj = {
+            "title": title,
+            "slug": slug,
+            "url": url,
+            "brand": brand,
+            "series": series,
+            "topics": topics,
+            "countries": countries,
+            "date": date,
+            "summary": summary,
+            "content_html": content_html,
+            "meta": meta
+        }
+        index.append(article_obj)
 
-def generate_home_page(latest_articles):
-    html_articles = '\n'.join([f'<li><a href="articles/{a["filename"]}">{a["title"]}</a> - {a["date"]}</li>' for a in latest_articles[:10]])
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>AvNexo - Expert Smartphone Guides</title>
-<link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
-{header_html}
-<main>
-<h1>AvNexo</h1>
-<section>
-<h2>Latest Articles</h2>
-<ul>
-{html_articles}
-</ul>
-</section>
-</main>
-{footer_html}
-</body>
-</html>"""
-    with open(os.path.join(BUILD_DIR, 'index.html'), 'w', encoding='utf-8') as f:
-        f.write(html)
+    # build lookup maps
+    brands = {}
+    brand_series = {}
+    topics_map = {}
+    countries_map = {}
+    for a in index:
+        # brand hub
+        if a["brand"]:
+            brands.setdefault(a["brand"], []).append(a)
+        # brand-series hub
+        if a["brand"] and a["series"]:
+            key = f"{a['brand']}-{a['series']}"
+            brand_series.setdefault(key, []).append(a)
+        # topics
+        for t in a["topics"]:
+            topics_map.setdefault(t, []).append(a)
+        # countries
+        for c in a["countries"]:
+            countries_map.setdefault(c, []).append(a)
 
-# پاکسازی پوشه builds و ساخت زیرپوشه‌ها
-os.makedirs(BUILD_DIR, exist_ok=True)
-os.makedirs(os.path.join(BUILD_DIR, 'articles'), exist_ok=True)
-os.makedirs(os.path.join(BUILD_DIR, 'brands'), exist_ok=True)
-os.makedirs(os.path.join(BUILD_DIR, 'topics'), exist_ok=True)
-os.makedirs(os.path.join(BUILD_DIR, 'countries'), exist_ok=True)
+    # write article pages
+    for a in index:
+        out_path = OUT_DIR / "articles" / f"{a['slug']}.html"
+        rendered = article_tpl.render(
+            title=a['title'],
+            date=a.get('date'),
+            brand=a.get('brand'),
+            series=a.get('series'),
+            summary=a.get('summary'),
+            content_html=a['content_html'],
+            related={
+                "brand": bool(a.get('brand')),
+                "series": bool(a.get('series')),
+                "topics": a.get('topics'),
+                "countries": a.get('countries')
+            },
+            meta=a
+        )
+        out_path.write_text(rendered, encoding="utf-8")
+        print(f"Wrote article: {out_path}")
 
-# تولید صفحات مقاله
-for article in articles:
-    related = [a for a in articles if a != article and 
-               (a['brand']==article['brand'] or 
-                a['topic']==article['topic'] or 
-                a['country']==article['country'])]
-    html = generate_article_page(article, related)
-    with open(os.path.join(BUILD_DIR, 'articles', article['filename']), 'w', encoding='utf-8') as f:
-        f.write(html)
+    # write brand hubs
+    for b, items in brands.items():
+        out_path = OUT_DIR / "brand" / f"{b}.html"
+        items_sorted = sorted(items, key=lambda x: x.get("date") or "", reverse=True)
+        rendered = hub_tpl.render(hub_title=f"Brand: {b}", hub_desc=None, items=[{"title": it['title'], "url": it['url'], "summary": it.get('summary')} for it in items_sorted])
+        out_path.write_text(rendered, encoding="utf-8")
+        print(f"Wrote brand hub: {out_path}")
 
-# تولید هاب برند و سری
-for brand, brand_articles in brands_hub.items():
-    os.makedirs(os.path.join(BUILD_DIR, 'brands', brand.lower()), exist_ok=True)
-    generate_hub_page(f'{brand} Hub', brand_articles,
-                      os.path.join(BUILD_DIR, 'brands', brand.lower(), 'index.html'))
-    for series, series_articles in series_hub[brand].items():
-        os.makedirs(os.path.join(BUILD_DIR, 'brands', brand.lower(), series.lower()), exist_ok=True)
-        generate_hub_page(f'{brand} {series} Hub', series_articles,
-                          os.path.join(BUILD_DIR, 'brands', brand.lower(), series.lower(), 'index.html'))
+    # write brand-series hubs
+    for key, items in brand_series.items():
+        out_path = OUT_DIR / "brand" / f"{key}.html"
+        rendered = hub_tpl.render(hub_title=f"Series: {key}", hub_desc=None, items=[{"title": it['title'], "url": it['url'], "summary": it.get('summary')} for it in items])
+        out_path.write_text(rendered, encoding="utf-8")
+        print(f"Wrote brand-series hub: {out_path}")
 
-# تولید هاب موضوع
-for topic, topic_articles in topics_hub.items():
-    folder = os.path.join(BUILD_DIR, 'topics', topic.lower().replace(' & ','-').replace(' ','-'))
-    os.makedirs(folder, exist_ok=True)
-    generate_hub_page(f'{topic} Hub', topic_articles,
-                      os.path.join(folder, 'index.html'))
+    # write topic hubs
+    for t, items in topics_map.items():
+        out_path = OUT_DIR / "topic" / f"{t}.html"
+        rendered = hub_tpl.render(hub_title=f"Topic: {t}", hub_desc=None, items=[{"title": it['title'], "url": it['url'], "summary": it.get('summary')} for it in items])
+        out_path.write_text(rendered, encoding="utf-8")
+        print(f"Wrote topic hub: {out_path}")
 
-# تولید هاب کشور
-for country, country_articles in countries_hub.items():
-    folder = os.path.join(BUILD_DIR, 'countries', country.lower())
-    os.makedirs(folder, exist_ok=True)
-    generate_hub_page(f'{country} Hub', country_articles,
-                      os.path.join(folder, 'index.html'))
+    # write country hubs
+    for c, items in countries_map.items():
+        out_path = OUT_DIR / "country" / f"{c}.html"
+        rendered = hub_tpl.render(hub_title=f"Country: {c}", hub_desc=None, items=[{"title": it['title'], "url": it['url'], "summary": it.get('summary')} for it in items])
+        out_path.write_text(rendered, encoding="utf-8")
+        print(f"Wrote country hub: {out_path}")
 
-# تولید هوم پیج
-generate_home_page(articles)
+    # write a simple index page
+    index_page = OUT_DIR / "index.html"
+    all_items = sorted(index, key=lambda x: x.get("date") or "", reverse=True)
+    rendered_index = hub_tpl.render(hub_title="Index", hub_desc="Latest articles", items=[{"title": it['title'], "url": it['url'], "summary": it.get('summary')} for it in all_items])
+    index_page.write_text(rendered_index, encoding="utf-8")
+    print(f"Wrote index: {index_page}")
 
-print("✅ All HTML pages generated successfully!")
+if __name__ == "__main__":
+    build()
