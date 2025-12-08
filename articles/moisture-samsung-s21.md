@@ -39,4 +39,4 @@ If you’ve ever opened your Samsung Galaxy in London, Manchester, Leeds, or Gla
 
 - Use certified cables and chargers
 - Clean USB-C port regularly
-- Enable Developer Options temporarily if needed...
+- Enable Developer Options temporarily if needed
