@@ -1,0 +1,33 @@
+---
+layout: default
+---
+
+<div class="posts">
+    {% for post in paginator.posts %}
+    <article class="post">
+      <h2><a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></h2>
+	<div class="date">
+	    <time datetime="{{ post.date }}">
+		{{ post.date | date: '%B %d, %Y'}}
+	    </time>
+	</div>
+	<div class="entry">
+        	 {{ post.content | markdownify | strip_html | truncatewords: 50 }}
+	</div>
+	<a href="{{ site.baseurl }}{{ post.url }}" class="read-more">Read More...</a>
+    </article>
+  {% endfor %}
+</div>
+<div class="pagination">
+  {% if paginator.next_page %}
+    <a href="{{ paginator.next_page_path }}" rel="next" class="third-width">next</a>
+  {% else %}
+    <span class="pagination-nonlink third-width">next</span>
+  {% endif %}
+  <span class="pagination-nonlink third-width">page: {{ paginator.page }} of {{ paginator.total_pages }}</span>
+  {% if paginator.previous_page %}
+    <a href="{{ paginator.previous_page_path }}" rel="prev" class="third-width">perv.</a>
+  {% else %}
+    <span class="pagination-nonlink third-width">perv.</span>
+  {% endif %}
+</div>

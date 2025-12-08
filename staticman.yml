@@ -1,0 +1,23 @@
+comments:
+  allowedFields: ["name", "email", "url", "agent", "msg", "message"]
+  branch: "master"
+  commitMessage: "new comment"
+  filename: "entry{@timestamp}"
+  format: "yaml"
+  generatedFields:
+    date:
+      type: date
+      options:
+        format: "timestamp-seconds"
+   
+  moderation: false
+  name: "gameich.com.ir"
+  path: "_data/comments/{options.slug}"
+  requiredFields: ["name", "email", "msg", "agent"]
+  transforms:
+    email: md5
+#  reCaptcha:
+#    enabled: true
+#    siteKey: "6LfdqVUUAAAAANHYP0HPd70wMReRgTPjQZFIqL7A"
+#    secret: "6LfdqVUUAAAAAKq0EQH3HObps6ohOfUfro-_WXAD"
+    

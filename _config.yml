@@ -1,0 +1,30 @@
+name: "avnexo"
+description: "avnexo!"
+author: avnexo
+url: https://wiki.avnexo.com
+baseurl: ""
+permalink: /:title/
+paginate_path: "/page/:num/"
+paginate: 15
+commonTags: ['how-to','news'']
+disqus:
+google_analytics: 
+webmaster_verifications:
+  google: 
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+sass:
+  style: :compressed # or :expanded
+feed:
+  excerpt_only: true      
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed 
+  - jekyll-paginate
+  - jekyll-redirect-from
+  - jekyll-seo-tag  
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
