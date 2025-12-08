@@ -1,35 +1,36 @@
-name: Build and Deploy Static Wiki
+name: Auto Build Wiki
 
 on:
   push:
     paths:
       - 'articles/**'
+      - 'build.py'
 
 permissions:
   contents: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install markdown pyyaml jinja2
+    - name: Install dependencies
+      run: |
+        pip install markdown pyyaml jinja2
 
-      - name: Build HTML
-        run: python build.py
+    - name: Run build.py
+      run: python build.py
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./builds
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./builds
