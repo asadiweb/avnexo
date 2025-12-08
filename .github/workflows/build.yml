@@ -1,28 +1,36 @@
-name: Build HTML Static Site
+name: Build and Deploy Static HTML
 
+# فقط وقتی مقاله جدید push شود
 on:
   push:
     paths:
       - 'articles/**'
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
 
-    - name: Set up Python
+    steps:
+    # گام 1: Checkout کد
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # گام 2: نصب پایتون
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.x'
 
+    # گام 3: نصب dependencies
     - name: Install dependencies
       run: |
         pip install markdown pyyaml jinja2
 
-    - name: Run build.py
+    # گام 4: اجرای build.py
+    - name: Build HTML
       run: python build.py
 
+    # گام 5: Deploy به GitHub Pages
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v5
       with:
