@@ -1,0 +1,21 @@
+<article>
+  <header>
+    <h1>{{ hub_title }}</h1>
+    {% if hub_desc %}<p class="summary">{{ hub_desc }}</p>{% endif %}
+  </header>
+
+  <section class="hub-list">
+    <ul>
+      {% for item in items %}
+        <li>
+          <a href="{{ item.url }}">{{ item.title }}</a>
+          {% if item.summary %} — <small>{{ item.summary }}</small>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <footer>
+    <p>Auto-generated hub — updated from front-matter tags.</p>
+  </footer>
+</article>
