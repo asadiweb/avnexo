@@ -1,6 +1,6 @@
 name: Build and Deploy Static HTML
 
-# فقط وقتی مقاله جدید push شود
+# وقتی مقاله جدید push شود
 on:
   push:
     paths:
@@ -32,7 +32,7 @@ jobs:
 
     # گام 5: Deploy به GitHub Pages
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v5
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./builds
